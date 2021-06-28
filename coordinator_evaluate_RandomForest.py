@@ -1,9 +1,9 @@
 
-import function_Evaluate_NaiveBayes
+import function_Evaluate_RandomForest
 
 
-# print(function_Evaluate_NaiveBayes.runModel(False, 'average4', 'all', False, False, 10))
-# print(function_Evaluate_NaiveBayes.runModel(True,'average4', '4050', True, True, 20))
+# print(function_Evaluate_RandomForest.runModel(False, 'average4', 'all', False, False, 10))
+# print(function_Evaluate_RandomForest.runModel(True,'average4', '4050', True, True, 20))
 # data_params = { 'mean_value_subtraction': False,
     #                 'data_resampling': 'average4', #options include 'last, 'average4', 'use4' and 'use7'
     #                 'features_selected': 'all', #options include 'all', '1070' and '4050'
@@ -27,7 +27,7 @@ for a in A:
             for d in D:
                 for e in E:
                     print(f"{i}: {a} {b} {c} {d} {e} {f}")
-                    print(function_Evaluate_NaiveBayes.runModel(a,b,c,d,e,f))
+                    print(function_Evaluate_RandomForest.runModel(a,b,c,d,e,f))
                     i=i+1
 
 print(len(A)*len(B)*len(C)*len(D)*len(E))
