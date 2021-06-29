@@ -9,7 +9,7 @@ from sklearn.preprocessing import StandardScaler
 import neptune.new as neptune
 
 def runModel(mean_value_subtraction, data_resampling, features_selected, standard_scaler, PCA_reduction, PCA_number_of_features):
-    run = neptune.init(project='frankbolton/Neurosteer-ML-v1', source_files=['*.py', 'environment.yaml'])
+    run = neptune.init(project='frankbolton/Neurosteer-ML-v1', source_files=[__file__, 'environment.yaml'])
 
     #preprocessing to select data to model
     data_params = { 'mean_value_subtraction': mean_value_subtraction,
@@ -30,7 +30,7 @@ def runModel(mean_value_subtraction, data_resampling, features_selected, standar
 
     run['parameters'] = data_params
 
-    run["sys/tags"].add(['Naive Bayes', 'loop1'])
+    run["sys/tags"].add(['Naive Bayes', 'loop1', 'binary'])
 
     #Data Preprocessing
     if (data_params['mean_value_subtraction']):
@@ -82,7 +82,9 @@ def runModel(mean_value_subtraction, data_resampling, features_selected, standar
         data = data.drop(data[data['timepoint']>3].index)
         data = data.drop(data[data['timepoint']<-3].index)
 
-
+    #Use binary data- drop label == 1
+    data = data.drop(data[data['label']==1].index)
+    
     #Data Feature Selection
     eeg_cols = []
     if (data_params['features_selected']=='1070'):
