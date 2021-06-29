@@ -7,9 +7,13 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.ensemble import RandomForestClassifier
 import neptune.new as neptune
+from sklearn.model_selection import KFold
+    
+# k-fold cross validation on combined data
 
 def runModel(mean_value_subtraction, data_resampling, features_selected, standard_scaler, PCA_reduction, PCA_number_of_features):
     run = neptune.init(project='frankbolton/Neurosteer-ML-v1', source_files=[__file__, 'environment.yaml'])
+    # run = neptune.init(project='frankbolton/helloworld', source_files=[__file__, 'environment.yaml'])
 
     #preprocessing to select data to model
     data_params = { 'mean_value_subtraction': mean_value_subtraction,
@@ -82,7 +86,6 @@ def runModel(mean_value_subtraction, data_resampling, features_selected, standar
         data = data.drop(data[data['timepoint']>3].index)
         data = data.drop(data[data['timepoint']<-3].index)
 
-
     #Use binary data- drop label == 1
     data = data.drop(data[data['label']==1].index)
 
@@ -102,8 +105,7 @@ def runModel(mean_value_subtraction, data_resampling, features_selected, standar
 
 
     # because we want to run through each 
-    def generateXy(data, participant):
-        temp = data[data['participant'] == participant]
+    def generateXy_multi(temp):
         y = list()
         X = list()
         
@@ -130,7 +132,7 @@ def runModel(mean_value_subtraction, data_resampling, features_selected, standar
         return(np.asarray(X), np.asarray(y))
 
 
-    participants = data['participant'].unique()
+    # participants = data['participant'].unique()
 
 
     #Test out the accuracies with the different parameter settings
@@ -139,33 +141,41 @@ def runModel(mean_value_subtraction, data_resampling, features_selected, standar
 
     accuracies = list()
     train_acc_list = list()
-    for p in participants:
-        X, y = generateXy(data, p)
-        # print(f"for participant {p}, X has the shape {X.shape} and y is {len(y)} long.")
+    X, y = generateXy_multi(data)
+    # print(f"for participant {p}, X has the shape {X.shape} and y is {len(y)} long.")
 
-        if (data_params['standard_scaler']):
-            scale = StandardScaler()
-            X = scale.fit_transform(X)
+    if (data_params['standard_scaler']):
+        scale = StandardScaler()
+        X = scale.fit_transform(X)
 
-        if (data_params['PCA_reduction']):
-            pca = PCA(n_components=data_params['PCA_number_of_features'])
-            pca.fit(X)
-        # print(pca.explained_variance_ratio_.cumsum())
-            X = pca.transform(X)
-        
-        
-        X_train, X_test, y_train, y_test = train_test_split(
-            X, y, test_size=0.3, random_state=42)
-        model = RandomForestClassifier( random_state=1)
-        y_pred = model.fit(X_train, y_train).predict(X_test)
+    if (data_params['PCA_reduction']):
+        pca = PCA(n_components=data_params['PCA_number_of_features'])
+        pca.fit(X)
+        run['train/PCA_explained_variance_sum']= pca.explained_variance_ratio_.cumsum()
+        X = pca.transform(X)
+    
+    
+    # X_train, X_test, y_train, y_test = train_test_split(
+    #     X, y, test_size=0.3, random_state=42)
+    
+    kf = KFold(n_splits=30)
+    kf.get_n_splits(X)
+    kindex = 0
+    for train_index, test_index in kf.split(X):
+        X_train, X_test = X[train_index], X[test_index]
+        y_train, y_test = y[train_index], y[test_index]
+        model = RandomForestClassifier(random_state=1, n_jobs=-1)
+        model.fit(X_train, y_train)  
+        y_pred = model.predict(X_test)
         acc = ((y_test == y_pred).sum())/len(y_test)
         accuracies.append(acc)
-        y_pred_train = model.fit(X_train, y_train).predict(X_train)
+        y_pred_train = model.predict(X_train)
         train_acc = ((y_train == y_pred_train).sum())/len(y_train)
         train_acc_list.append(train_acc)
-        run['train/participant'].log(p)
+        run['train/k_index'].log(kindex)
         run['train/train_acc'].log(train_acc)
         run['test/acc'].log(acc)
+        kindex = kindex+1
 
 
 

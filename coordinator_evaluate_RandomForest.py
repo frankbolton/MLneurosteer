@@ -3,8 +3,8 @@ import function_Evaluate_RandomForest
 import function_Evaluate_NaiveBayes
 
 
-# print(function_Evaluate_RandomForest.runModel(False, 'average4', 'all', False, False, 10))
-# print(function_Evaluate_NaiveBayes.runModel(False, 'average4', 'all', False, False, 10))
+# print(function_Evaluate_RandomForest.runModel(False, 'average4', 'all', False, True, 10))
+# print(function_Evaluate_NaiveBayes.runModel(False, 'average4', 'all', False, True, 10))
 
 data_params = { 'mean_value_subtraction': False,
                     'data_resampling': 'average4', #options include 'last, 'average4', 'use4' and 'use7'
