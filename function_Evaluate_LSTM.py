@@ -18,8 +18,8 @@ from tensorflow.keras.utils import to_categorical
 # k-fold cross validation on combined data
 
 def runModel(mean_value_subtraction, data_resampling, features_selected, standard_scaler, binary_classifier):
-    # run = neptune.init(project='frankbolton/Neurosteer-ML-v1', source_files=[__file__, 'environment.yaml'])
-    run = neptune.init(project='frankbolton/helloworld', source_files=[__file__, 'environment.yaml'])
+    run = neptune.init(project='frankbolton/Neurosteer-ML-v1', source_files=[__file__, 'environment.yaml'])
+    # run = neptune.init(project='frankbolton/helloworld', source_files=[__file__, 'environment.yaml'])
 
     #preprocessing to select data to model
     data_params =   {'mean_value_subtraction': mean_value_subtraction,
@@ -36,14 +36,14 @@ def runModel(mean_value_subtraction, data_resampling, features_selected, standar
     #                 }
 
     params =        {'verbose':0,
-                    'epochs': 200, 
+                    'epochs': 100, 
                     'batch_size' :256,
                     'loss' : 'categorical_crossentropy', 
                     }
 
     run['parameters'] = data_params
 
-    run["sys/tags"].add(['LSTM', 'loop6'])
+    run["sys/tags"].add(['LSTM', 'loop6', 'cpu'])
 
     #Data Preprocessing
     if (data_params['mean_value_subtraction']):
@@ -177,6 +177,7 @@ def runModel(mean_value_subtraction, data_resampling, features_selected, standar
         model = Sequential()
         model.add(LSTM(100, input_shape=(n_timesteps,n_features)))
         model.add(Dense(100, activation='relu'))
+        model.add(Dense(20, activation='relu'))
         model.add(Dense(n_outputs, activation='softmax'))
         model.compile(loss=params['loss'], optimizer='adam', metrics=['accuracy'])      
 
