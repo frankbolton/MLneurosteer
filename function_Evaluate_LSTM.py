@@ -182,13 +182,18 @@ def runModel(mean_value_subtraction, data_resampling, features_selected, standar
 
         history = model.fit(X_train, y_train, epochs=params['epochs'], batch_size=params['batch_size'], \
             verbose=params['verbose'], validation_data = (X_val, y_val))
-        run['train/history'].log(history)
+        run['train/loss_log'].log(history.history['loss'])
+        run['train/val_loss_log'].log(history.history['val_loss'])
+        run['train/accuracy_log'].log(history.history['accuracy'])
+        run['train/val_accuray_log'].log(history.history['val_accuracy'])
         y_pred = model.predict(X_test)
 
-        acc = ((y_test == y_pred).sum())/len(y_test)
+        # acc = ((y_test == y_pred).sum())/len(y_test)
+        acc = ((y_test.argmax(axis=1) == y_pred.argmax(axis=1)).sum())/len(y_test)
         accuracies.append(acc)
         y_pred_train = model.predict(X_train)
-        train_acc = ((y_train == y_pred_train).sum())/len(y_train)
+        train_acc = ((y_train.argmax(axis=1) == y_pred_train.argmax(axis=1)).sum())/len(y_train)
+        # train_acc = ((y_train == y_pred_train).sum())/len(y_train)
         train_acc_list.append(train_acc)
         run['train/participant'].log(p)
         run['train/train_acc'].log(train_acc)
