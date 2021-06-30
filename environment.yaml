@@ -12,7 +12,8 @@ dependencies:
     - matplotlib
     - seaborn
     - pip
-#    - tensorflow-gpu
-#    - catboost
-#    - xgboost
+    # - tensorflow-gpu
+    - tensorflow
+    # - catboost
+    # - xgboost
     - notebook
