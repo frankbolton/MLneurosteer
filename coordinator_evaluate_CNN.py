@@ -2,7 +2,7 @@
 import function_Evaluate_CNN
 
 # print(function_Evaluate_CNN.runModel(False, 'use7', 'all', False, True))
-# print(function_Evaluate_CNN.runModel(True, 'use4', 'all', False, True))
+# print(function_Evaluate_CNN.runModel(True, 'use7', 'all', False, True))
 
 # data_params = { 'mean_value_subtraction': False, #A
 #                 'data_resampling': 'average4', #B options include 'last, 'average4', 'use4' and 'use7'

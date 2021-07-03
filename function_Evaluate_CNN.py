@@ -22,8 +22,8 @@ from sys import argv
 # k-fold cross validation on combined data
 
 def runModel(mean_value_subtraction, data_resampling, features_selected, standard_scaler, binary_classifier):
-    run = neptune.init(project='frankbolton/Neurosteer-ML-v1', source_files=[__file__, argv[0], 'environment.yaml'])
-    # run = neptune.init(project='frankbolton/helloworld', source_files=[__file__ , argv[0], 'environment.yaml'])
+    # run = neptune.init(project='frankbolton/Neurosteer-ML-v1', source_files=[__file__, argv[0], 'environment.yaml'])
+    run = neptune.init(project='frankbolton/helloworld', source_files=[__file__ , argv[0], 'environment.yaml'])
 
     #preprocessing to select data to model
     data_params =   {'mean_value_subtraction': mean_value_subtraction,
@@ -40,7 +40,7 @@ def runModel(mean_value_subtraction, data_resampling, features_selected, standar
     #                 }
 
     params =        {'verbose':1,
-                    'epochs': 100, 
+                    'epochs': 200, 
                     'batch_size' :256,
                     'loss' : 'categorical_crossentropy', 
                     }
@@ -122,6 +122,42 @@ def runModel(mean_value_subtraction, data_resampling, features_selected, standar
 
     #Test out the accuracies with the different parameter settings
     # print(f"The data frame shape is {data.shape}")
+    def generateXy(data, participant):
+        temp = data[data['participant'] == participant]
+        y = list()
+        X = list()
+
+        if(data_params['data_resampling']=='use4'):
+            for t in temp['uniqueTrialCounter'].unique():
+                b = np.array(data.loc[data.uniqueTrialCounter == t,eeg_cols])[:4,:]
+                X.append(b)
+                y.append(data.loc[data['uniqueTrialCounter']==t, 'label'].values[0])
+                # y.append(temp[temp['uniqueTrialCounter']==t].label.values[0])
+                # X.append(temp.loc[temp['uniqueTrialCounter']==t, eeg_cols].transpose().values.flatten())
+
+        elif(data_params['data_resampling']=='use7'):
+            for t in temp['uniqueTrialCounter'].unique():
+                b = np.array(data.loc[data.uniqueTrialCounter == t,eeg_cols])[:7,:]
+                X.append(b)
+                y.append(data.loc[data['uniqueTrialCounter']==t, 'label'].values[0])
+                # y.append(temp[temp['uniqueTrialCounter']==t].label.values[0])
+                # X.append(temp.loc[temp['uniqueTrialCounter']==t, eeg_cols].transpose().values.flatten())
+
+        # elif(data_params['data_resampling']=='average4'):
+        #     for t in temp['uniqueTrialCounter'].unique():
+        #         y.append(temp[temp['uniqueTrialCounter']==t].label.values[0])
+        #         X.append(temp.loc[temp['uniqueTrialCounter']==t, eeg_cols].mean())
+
+        # elif (data_params['data_resampling']=='last'):
+        #     for t in temp['uniqueTrialCounter'].unique():
+        #         y.append(temp[temp['uniqueTrialCounter']==t].label.values[0])
+        #         X.append(temp.loc[temp['uniqueTrialCounter']==t, eeg_cols].values[-1])
+
+        return(np.asarray(X), np.asarray(y))
+
+
+    participants = data['participant'].unique()
+
 
     def generateXyLeaveOne(data, participant):
         data_test = data[data['participant'] == participant]
@@ -161,11 +197,21 @@ def runModel(mean_value_subtraction, data_resampling, features_selected, standar
 
     for p in participants:
         #Note- the "Leave one out" is for validation- inside the NN we need a different test/val split
-        X, X_test, y, y_test= generateXyLeaveOne(data, p)
-
+        # X, X_test, y, y_test= generateXyLeaveOne(data, p)
+        # print(f'Zero split shape X={X.shape} and y length = {len(y)}')
+        # print(f'Zero split shape X_test={X_test.shape} and y_test length = {len(y_test)}')
+        
+        X, y = generateXy(data, p)
+        print(f'first split shape X={X.shape} and y length = {len(y)}')
+        X, X_test, y, y_test = train_test_split(
+            X, y, test_size=0.2, random_state=42)
+        print(f'second split shape X={X.shape} and y length = {len(y)}')
+        print(f'second split shape X_test={X_test.shape} and y_test length = {len(y_test)}')
         X_train, X_val, y_train, y_val = train_test_split(
-            X, y, test_size=0.3, random_state=42)
-
+            X, y, test_size=0.2, random_state=42)
+        print(f'second split shape X_train={X_train.shape} and y train length = {len(y_train)}')
+        print(f'second split shape X_val={X_val.shape} and y_val length = {len(y_val)}')
+        
         if (data_params['standard_scaler']):
             scale = StandardScaler()
             scale.fit(X_train)
