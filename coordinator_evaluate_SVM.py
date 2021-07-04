@@ -2,8 +2,11 @@
 import function_Evaluate_SVM
 
 
-# print(function_Evaluate_SVM.runModel(False, 'average4', 'all', False, False, 10, False))
+# print(function_Evaluate_SVM.runModel(False, 'use7', 'all', False, False, 10, False))
+# print(function_Evaluate_SVM.runModel(True,'use4', '4050', True, True, 20, True))
+# print(function_Evaluate_SVM.runModel(True,'last', '4050', True, True, 20, True))
 # print(function_Evaluate_SVM.runModel(True,'average4', '4050', True, True, 20, True))
+
 # data_params = { 'mean_value_subtraction': False,
     #                 'data_resampling': 'average4', #options include 'last, 'average4', 'use4' and 'use7'
     #                 'features_selected': 'all', #options include 'all', '1070' and '4050'
