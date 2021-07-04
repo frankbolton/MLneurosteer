@@ -37,14 +37,14 @@ def runModel(mean_value_subtraction, data_resampling, features_selected, standar
     #                 }
 
     params =        {'verbose':1,
-                    'epochs': 100, 
+                    'epochs': 200, 
                     'batch_size' :256,
                     'loss' : 'categorical_crossentropy', 
                     }
 
     run['parameters'] = data_params
 
-    run["sys/tags"].add(['LSTM', 'loop6', 'cpu', 'Dropout'])
+    run["sys/tags"].add(['LSTM', 'loop11', 'cpu', 'Dropout'])
 
     #Data Preprocessing
     if (data_params['mean_value_subtraction']):
@@ -119,49 +119,85 @@ def runModel(mean_value_subtraction, data_resampling, features_selected, standar
 
     #Test out the accuracies with the different parameter settings
     # print(f"The data frame shape is {data.shape}")
+    def generateXy(data, participant):
+        temp = data[data['participant'] == participant]
+        y = list()
+        X = list()
 
-    def generateXyLeaveOne(data, participant):
-        data_test = data[data['participant'] == participant]
-        data_train = data[data['participant'] != participant]
-        # print(data_test.shape)
-        # print(data_train.shape)
-        X_train = list()
-        X_test = list()
-        y_train = list()
-        y_test = list()
-        
         if(data_params['data_resampling']=='use4'):
-            for t in data_test['uniqueTrialCounter'].unique():
-                b = np.array(data_test.loc[data_test.uniqueTrialCounter == t,eeg_cols])[:4,:]
-                X_test.append(b)
-                y_test.append(data_test.loc[data['uniqueTrialCounter']==t, 'label'].values[0])
-            for t in data_train['uniqueTrialCounter'].unique():
-                b = np.array(data_train.loc[data_train.uniqueTrialCounter == t,eeg_cols])[:4,:]
-                X_train.append(b)
-                y_train.append(data_train.loc[data['uniqueTrialCounter']==t, 'label'].values[0])
+            for t in temp['uniqueTrialCounter'].unique():
+                b = np.array(data.loc[data.uniqueTrialCounter == t,eeg_cols])[:4,:]
+                X.append(b)
+                y.append(data.loc[data['uniqueTrialCounter']==t, 'label'].values[0])
+                # y.append(temp[temp['uniqueTrialCounter']==t].label.values[0])
+                # X.append(temp.loc[temp['uniqueTrialCounter']==t, eeg_cols].transpose().values.flatten())
 
         elif(data_params['data_resampling']=='use7'):
-            for t in data_test['uniqueTrialCounter'].unique():
-                b = np.array(data_test.loc[data_test.uniqueTrialCounter == t,eeg_cols])[:7,:]
-                X_test.append(b)
-                y_test.append(data_test.loc[data['uniqueTrialCounter']==t, 'label'].values[0])
-            for t in data_train['uniqueTrialCounter'].unique():
-                b = np.array(data_train.loc[data_train.uniqueTrialCounter == t,eeg_cols])[:7,:]
-                X_train.append(b)
-                y_train.append(data_train.loc[data['uniqueTrialCounter']==t, 'label'].values[0])
+            for t in temp['uniqueTrialCounter'].unique():
+                b = np.array(data.loc[data.uniqueTrialCounter == t,eeg_cols])[:7,:]
+                X.append(b)
+                y.append(data.loc[data['uniqueTrialCounter']==t, 'label'].values[0])
+                # y.append(temp[temp['uniqueTrialCounter']==t].label.values[0])
+                # X.append(temp.loc[temp['uniqueTrialCounter']==t, eeg_cols].transpose().values.flatten())
+
+        elif(data_params['data_resampling']=='average4'):
+            for t in temp['uniqueTrialCounter'].unique():
+                y.append(temp[temp['uniqueTrialCounter']==t].label.values[0])
+                X.append(temp.loc[temp['uniqueTrialCounter']==t, eeg_cols].mean())
+
+        elif (data_params['data_resampling']=='last'):
+            for t in temp['uniqueTrialCounter'].unique():
+                y.append(temp[temp['uniqueTrialCounter']==t].label.values[0])
+                X.append(temp.loc[temp['uniqueTrialCounter']==t, eeg_cols].values[-1])
+
+        return(np.asarray(X), np.asarray(y))
+    # def generateXyLeaveOne(data, participant):
+    #     data_test = data[data['participant'] == participant]
+    #     data_train = data[data['participant'] != participant]
+    #     # print(data_test.shape)
+    #     # print(data_train.shape)
+    #     X_train = list()
+    #     X_test = list()
+    #     y_train = list()
+    #     y_test = list()
+        
+    #     if(data_params['data_resampling']=='use4'):
+    #         for t in data_test['uniqueTrialCounter'].unique():
+    #             b = np.array(data_test.loc[data_test.uniqueTrialCounter == t,eeg_cols])[:4,:]
+    #             X_test.append(b)
+    #             y_test.append(data_test.loc[data['uniqueTrialCounter']==t, 'label'].values[0])
+    #         for t in data_train['uniqueTrialCounter'].unique():
+    #             b = np.array(data_train.loc[data_train.uniqueTrialCounter == t,eeg_cols])[:4,:]
+    #             X_train.append(b)
+    #             y_train.append(data_train.loc[data['uniqueTrialCounter']==t, 'label'].values[0])
+
+    #     elif(data_params['data_resampling']=='use7'):
+    #         for t in data_test['uniqueTrialCounter'].unique():
+    #             b = np.array(data_test.loc[data_test.uniqueTrialCounter == t,eeg_cols])[:7,:]
+    #             X_test.append(b)
+    #             y_test.append(data_test.loc[data['uniqueTrialCounter']==t, 'label'].values[0])
+    #         for t in data_train['uniqueTrialCounter'].unique():
+    #             b = np.array(data_train.loc[data_train.uniqueTrialCounter == t,eeg_cols])[:7,:]
+    #             X_train.append(b)
+    #             y_train.append(data_train.loc[data['uniqueTrialCounter']==t, 'label'].values[0])
         
             
-        return [np.asarray(X_train), np.asarray(X_test), np.asarray(y_train), np.asarray(y_test)]
+    #     return [np.asarray(X_train), np.asarray(X_test), np.asarray(y_train), np.asarray(y_test)]
 
     accuracies = list()
     train_acc_list = list()
 
     for p in participants:
         #Note- the "Leave one out" is for validation- inside the NN we need a different test/val split
-        X, X_test, y, y_test= generateXyLeaveOne(data, p)
-
-        X_train, X_val, y_train, y_val = train_test_split(
+        # X, X_test, y, y_test= generateXyLeaveOne(data, p)
+        X,y = generateXy(data, p)
+        print(f'X shape is {X.shape}')
+        X_train, X_test, y_train, y_test = train_test_split(
             X, y, test_size=0.3, random_state=42)
+        
+        print(f'X2 shape is {X.shape}')
+        X_train, X_val, y_train, y_val = train_test_split(
+            X_train, y_train, test_size=0.3, random_state=42)
 
         if (data_params['standard_scaler']):
             scale = StandardScaler()
@@ -174,6 +210,8 @@ def runModel(mean_value_subtraction, data_resampling, features_selected, standar
         y_train = to_categorical(y_train)
         y_val = to_categorical(y_val)
 
+        print(f'y-train shape is {y_train.shape}')
+        print(f'X-train shape is {X_train.shape}')
         n_timesteps, n_features, n_outputs = X_train.shape[1], X_train.shape[2], y_train.shape[1]
         model = Sequential()
         model.add(LSTM(100, input_shape=(n_timesteps,n_features)))
