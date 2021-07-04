@@ -179,7 +179,6 @@ def runModel(mean_value_subtraction, data_resampling, features_selected, standar
         model.add(LSTM(100, input_shape=(n_timesteps,n_features)))
         model.add(Dropout(0.5))
         model.add(Dense(100, activation='relu'))
-        model.add(Dense(20, activation='relu'))
         model.add(Dense(n_outputs, activation='softmax'))
         model.compile(loss=params['loss'], optimizer='adam', metrics=['accuracy'])      
 
