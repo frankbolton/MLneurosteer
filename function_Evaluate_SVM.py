@@ -12,8 +12,8 @@ from sklearn.model_selection import train_test_split
 # k-fold cross validation on combined data
 
 def runModel(mean_value_subtraction, data_resampling, features_selected, standard_scaler, PCA_reduction, PCA_number_of_features, binary_classifier):
-    # run = neptune.init(project='frankbolton/Neurosteer-ML-v1', source_files=[__file__, 'environment.yaml'])
-    run = neptune.init(project='frankbolton/helloworld', source_files=[__file__, 'environment.yaml'])
+    run = neptune.init(project='frankbolton/Neurosteer-ML-v1', source_files=[__file__, 'environment.yaml'])
+    # run = neptune.init(project='frankbolton/helloworld', source_files=[__file__, 'environment.yaml'])
 
     #preprocessing to select data to model
     data_params = { 'mean_value_subtraction': mean_value_subtraction,
@@ -36,7 +36,7 @@ def runModel(mean_value_subtraction, data_resampling, features_selected, standar
 
     run['parameters'] = data_params
 
-    run["sys/tags"].add(['SVM', 'loop8', 'each_participant'])
+    run["sys/tags"].add(['SVM', 'loop13', 'each_participant'])
 
     #Data Preprocessing
     if (data_params['mean_value_subtraction']):
@@ -277,4 +277,3 @@ def runModel(mean_value_subtraction, data_resampling, features_selected, standar
     run['train/average_acc'] =  np.array(train_acc_list).mean()
     run.stop()
     return(np.array(accuracies).mean())
-    
