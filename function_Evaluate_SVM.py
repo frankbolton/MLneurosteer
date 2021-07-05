@@ -260,7 +260,7 @@ def runModel(mean_value_subtraction, data_resampling, features_selected, standar
         grid.fit(X_train, y_train)
 
         model = grid.best_estimator_
-        run['train/best_params_', grid.best_params_]
+        run['train/best_params_'].log(grid.best_params_)
         print(grid.best_params_)
         y_pred = model.predict(X_test)
     
@@ -277,3 +277,4 @@ def runModel(mean_value_subtraction, data_resampling, features_selected, standar
     run['train/average_acc'] =  np.array(train_acc_list).mean()
     run.stop()
     return(np.array(accuracies).mean())
+    
