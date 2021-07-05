@@ -36,7 +36,7 @@ def runModel(mean_value_subtraction, data_resampling, features_selected, standar
 
     run['parameters'] = data_params
 
-    run["sys/tags"].add(['SVM', 'loop8', 'leave one out'])
+    run["sys/tags"].add(['SVM', 'loop8', 'each_participant'])
 
     #Data Preprocessing
     if (data_params['mean_value_subtraction']):
@@ -155,97 +155,123 @@ def runModel(mean_value_subtraction, data_resampling, features_selected, standar
             
     #     return [np.asarray(X_train), np.asarray(X_test), np.asarray(y_train), np.asarray(y_test)]
 
-    def generateXy_multi(temp):
+    # def generateXy_multi(temp):
+    #     y = list()
+    #     X = list()
+        
+    #     if(data_params['data_resampling']=='use4'):
+    #         for t in temp['uniqueTrialCounter'].unique():
+    #             # b = np.array(temp.loc[temp.uniqueTrialCounter == t,eeg_cols])[:4,:]
+    #             # X.append(b)
+    #             # y.append(temp.loc[temp['uniqueTrialCounter']==t, 'label'].values[0])
+    #             y.append(temp[temp['uniqueTrialCounter']==t].label.values[0])
+    #             X.append(temp.loc[temp['uniqueTrialCounter']==t, eeg_cols].transpose().values.flatten())
+        
+    #     elif(data_params['data_resampling']=='use7'):
+    #         for t in temp['uniqueTrialCounter'].unique():
+    #             # b = np.array(temp.loc[temp.uniqueTrialCounter == t,eeg_cols])[:7,:]
+    #             # X.append(b)
+    #             # y.append(temp.loc[temp['uniqueTrialCounter']==t, 'label'].values[0])
+    #             y.append(temp[temp['uniqueTrialCounter']==t].label.values[0])
+    #             X.append(temp.loc[temp['uniqueTrialCounter']==t, eeg_cols].transpose().values.flatten())
+
+    #     elif(data_params['data_resampling']=='average4'):
+    #         for t in temp['uniqueTrialCounter'].unique():
+    #             # b = np.array(temp.loc[temp.uniqueTrialCounter == t,eeg_cols])[:4,:].mean()
+    #             # X.append(b)
+    #             # y.append(temp.loc[temp['uniqueTrialCounter']==t, 'label'].values[0])
+    #             y.append(temp[temp['uniqueTrialCounter']==t].label.values[0])
+    #             X.append(temp.loc[temp['uniqueTrialCounter']==t, eeg_cols].mean())
+
+    #     elif (data_params['data_resampling']=='last'):
+    #         for t in temp['uniqueTrialCounter'].unique():
+    #             # b = np.array(temp.loc[temp.uniqueTrialCounter == t,eeg_cols])[:,:]
+    #             # X.append(b)
+    #             # y.append(temp.loc[temp['uniqueTrialCounter']==t, 'label'].values[0])
+    #             y.append(temp[temp['uniqueTrialCounter']==t].label.values[0])
+    #             X.append(temp.loc[temp['uniqueTrialCounter']==t, eeg_cols].values[-1])
+
+    #     return(np.asarray(X), np.asarray(y))
+
+    def generateXy(data, participant):
+        temp = data[data['participant'] == participant]
         y = list()
         X = list()
         
         if(data_params['data_resampling']=='use4'):
             for t in temp['uniqueTrialCounter'].unique():
-                # b = np.array(temp.loc[temp.uniqueTrialCounter == t,eeg_cols])[:4,:]
-                # X.append(b)
-                # y.append(temp.loc[temp['uniqueTrialCounter']==t, 'label'].values[0])
                 y.append(temp[temp['uniqueTrialCounter']==t].label.values[0])
                 X.append(temp.loc[temp['uniqueTrialCounter']==t, eeg_cols].transpose().values.flatten())
         
         elif(data_params['data_resampling']=='use7'):
             for t in temp['uniqueTrialCounter'].unique():
-                # b = np.array(temp.loc[temp.uniqueTrialCounter == t,eeg_cols])[:7,:]
-                # X.append(b)
-                # y.append(temp.loc[temp['uniqueTrialCounter']==t, 'label'].values[0])
                 y.append(temp[temp['uniqueTrialCounter']==t].label.values[0])
                 X.append(temp.loc[temp['uniqueTrialCounter']==t, eeg_cols].transpose().values.flatten())
 
         elif(data_params['data_resampling']=='average4'):
             for t in temp['uniqueTrialCounter'].unique():
-                # b = np.array(temp.loc[temp.uniqueTrialCounter == t,eeg_cols])[:4,:].mean()
-                # X.append(b)
-                # y.append(temp.loc[temp['uniqueTrialCounter']==t, 'label'].values[0])
                 y.append(temp[temp['uniqueTrialCounter']==t].label.values[0])
                 X.append(temp.loc[temp['uniqueTrialCounter']==t, eeg_cols].mean())
 
         elif (data_params['data_resampling']=='last'):
             for t in temp['uniqueTrialCounter'].unique():
-                # b = np.array(temp.loc[temp.uniqueTrialCounter == t,eeg_cols])[:,:]
-                # X.append(b)
-                # y.append(temp.loc[temp['uniqueTrialCounter']==t, 'label'].values[0])
                 y.append(temp[temp['uniqueTrialCounter']==t].label.values[0])
                 X.append(temp.loc[temp['uniqueTrialCounter']==t, eeg_cols].values[-1])
 
         return(np.asarray(X), np.asarray(y))
 
+
     accuracies = list()
     train_acc_list = list()
 
 
-    # for p in participants:
-    # X_train, X_test, y_train, y_test= generateXyLeaveOne(data, p)
-    X,y = generateXy_multi(data)
-    print(f'first split shape X={X.shape} and y length = {len(y)}')
+    for p in participants:
+        X,y = generateXy(data, p)
+        print(f'first split shape X={X.shape} and y length = {len(y)}')
 
-    X_train, X_test, y_train, y_test = train_test_split(
-            X, y, test_size=0.3, random_state=42)
+        X_train, X_test, y_train, y_test = train_test_split(
+                X, y, test_size=0.3, random_state=42)
 
     
-    print(f'second split shape X_test={X_test.shape} and y_test length = {len(y_test)}')
-    print(f'second split shape X_train={X_train.shape} and y train length = {len(y_train)}')
+        print(f'second split shape X_test={X_test.shape} and y_test length = {len(y_test)}')
+        print(f'second split shape X_train={X_train.shape} and y train length = {len(y_train)}')
 
 
-    if (data_params['standard_scaler']):
-        scale = StandardScaler()
-        scale.fit(X_train)
-        X_train = scale.transform(X_train)
-        X_test = scale.transform(X_test)
+        if (data_params['standard_scaler']):
+            scale = StandardScaler()
+            scale.fit(X_train)
+            X_train = scale.transform(X_train)
+            X_test = scale.transform(X_test)
 
-    if (data_params['PCA_reduction']):
-        pca = PCA(n_components=data_params['PCA_number_of_features'])
-        pca.fit(X_train)
-        run['train/PCA_explained_variance_sum']= pca.explained_variance_ratio_.cumsum()
-        X_train = pca.transform(X_train)
-        X_test = pca.transform(X_test)
+        if (data_params['PCA_reduction']):
+            pca = PCA(n_components=data_params['PCA_number_of_features'])
+            pca.fit(X_train)
+            run['train/PCA_explained_variance_sum']= pca.explained_variance_ratio_.cumsum()
+            X_train = pca.transform(X_train)
+            X_test = pca.transform(X_test)
 
-    param_grid = {'C': [1, 5, 10, 50],
+        param_grid = {'C': [1, 5, 10, 50],
             'gamma': [0.0001, 0.0005, 0.001, 0.005]}
     
         
-    model = SVC(kernel='rbf')
-    grid = GridSearchCV(model, param_grid, n_jobs = -1)      
+        model = SVC(kernel='rbf')
+        grid = GridSearchCV(model, param_grid, n_jobs = -1)      
         
-    grid.fit(X_train, y_train)
+        grid.fit(X_train, y_train)
 
-    model = grid.best_estimator_
-    # yfit = model.predict(Xtest)  
-    run['train/best_params_', grid.best_params_]
-    print(grid.best_params_)
-    y_pred = model.predict(X_test)
+        model = grid.best_estimator_
+        run['train/best_params_', grid.best_params_]
+        print(grid.best_params_)
+        y_pred = model.predict(X_test)
     
-    acc = ((y_test == y_pred).sum())/len(y_test)
-    accuracies.append(acc)
-    y_pred_train = model.predict(X_train)
-    train_acc = ((y_train == y_pred_train).sum())/len(y_train)
-    train_acc_list.append(train_acc)
-    # run['train/participant'].log(p)
-    run['train/train_acc'].log(train_acc)
-    run['test/acc'].log(acc)
+        acc = ((y_test == y_pred).sum())/len(y_test)
+        accuracies.append(acc)
+        y_pred_train = model.predict(X_train)
+        train_acc = ((y_train == y_pred_train).sum())/len(y_train)
+        train_acc_list.append(train_acc)
+        run['train/participant'].log(p)
+        run['train/train_acc'].log(train_acc)
+        run['test/acc'].log(acc)
 
     run['test/average_acc'] =  np.array(accuracies).mean()
     run['train/average_acc'] =  np.array(train_acc_list).mean()
