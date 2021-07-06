@@ -186,6 +186,7 @@ def runModel(mean_value_subtraction, data_resampling, features_selected, standar
             scale.fit(X_train)
             X_train = scale.transform(X_train)
             X_test = scale.transform(X_test)
+            X_val = scale.transform(X_val)
 
         if (data_params['PCA_reduction']):
             pca = PCA(n_components=data_params['PCA_number_of_features'])
@@ -193,6 +194,7 @@ def runModel(mean_value_subtraction, data_resampling, features_selected, standar
             run['train/PCA_explained_variance_sum']= pca.explained_variance_ratio_.cumsum()
             X_train = pca.transform(X_train)
             X_test = pca.transform(X_test)
+            X_val = pca.transform(X_val)
     
 
         y_test = to_categorical(y_test)
