@@ -2,8 +2,8 @@
 import function_Evaluate_FC
 
 
-# print(function_Evaluate_FC.runModel(False, 'use7', 'all', False, False, 10, False))
-# print(function_Evaluate_FC.runModel(True,'use4', '4050', True, True, 20, True))
+print(function_Evaluate_FC.runModel(False, 'use7', 'all', False, False, 10, False))
+print(function_Evaluate_FC.runModel(True,'use4', '4050', True, True, 10, True))
 
 # data_params = { 'mean_value_subtraction': False,
     #                 'data_resampling': 'average4', #options include 'last, 'average4', 'use4' and 'use7'
@@ -31,7 +31,7 @@ for a in A:
                 for e in E:
                     for g in G:
                         print(f"{i}: {a} {b} {c} {d} {e} {f} {g}")
-                        print(function_Evaluate_FC.runModel(a,b,c,d,e,f,g))
+                        # print(function_Evaluate_FC.runModel(a,b,c,d,e,f,g))
                         i=i+1
 
 print(len(A)*len(B)*len(C)*len(D)*len(E)* len(G))

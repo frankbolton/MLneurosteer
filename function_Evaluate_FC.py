@@ -10,12 +10,13 @@ from tensorflow.keras import models
 from tensorflow.keras import layers
 # from tensorflow.keras.layers import Dense
 from tensorflow.keras.utils import to_categorical
+from sklearn.model_selection import KFold
 
 # k-fold cross validation on combined data
 
 def runModel(mean_value_subtraction, data_resampling, features_selected, standard_scaler, PCA_reduction, PCA_number_of_features, binary_classifier):
-    run = neptune.init(project='frankbolton/Neurosteer-ML-v1', source_files=[__file__, 'environment.yaml'])
-    # run = neptune.init(project='frankbolton/helloworld', source_files=[__file__, 'environment.yaml'])
+    # run = neptune.init(project='frankbolton/Neurosteer-ML-v1', source_files=[__file__, 'environment.yaml'])
+    run = neptune.init(project='frankbolton/helloworld', source_files=[__file__, 'environment.yaml'])
 
     #preprocessing to select data to model
     data_params = { 'mean_value_subtraction': mean_value_subtraction,
@@ -39,12 +40,12 @@ def runModel(mean_value_subtraction, data_resampling, features_selected, standar
     run['parameters'] = data_params
 
     params =        {'verbose':0,
-                    'epochs': 200, 
+                    'epochs': 400, 
                     'batch_size' :256,
                     'loss' : 'categorical_crossentropy', 
                     }
 
-    run["sys/tags"].add(['FC', 'loop13'])
+    run["sys/tags"].add(['FC', 'loop14', "pooled"])
 
     #Data Preprocessing
     if (data_params['mean_value_subtraction']):
@@ -114,93 +115,95 @@ def runModel(mean_value_subtraction, data_resampling, features_selected, standar
         eeg_cols += ["VC_"+str(x) for x in [*range(0,13)]]
         eeg_cols += ["A_"+str(x) for x in [*range(0,14)]]
 
-    participants = data['participant'].unique()
-
-    #Test out the accuracies with the different parameter settings
-    # print(f"The data frame shape is {data.shape}")
-
-    def generateXyLeaveOne(data, participant):
-        data_test = data[data['participant'] == participant]
-        data_train = data[data['participant'] != participant]
-        # print(data_test.shape)
-        # print(data_train.shape)
-        X_train = list()
-        X_test = list()
-        y_train = list()
-        y_test = list()
+    def generateXy_multi(temp):
+        y = list()
+        X = list()
         
         if(data_params['data_resampling']=='use4'):
-            for t in data_test['uniqueTrialCounter'].unique():
-                y_test.append(data_test[data_test['uniqueTrialCounter']==t].label.values[0])
-                X_test.append(data_test.loc[data_test['uniqueTrialCounter']==t, eeg_cols].transpose().values.flatten())
-            for t in data_train['uniqueTrialCounter'].unique():
-                y_train.append(data_train[data_train['uniqueTrialCounter']==t].label.values[0])
-                X_train.append(data_train.loc[data_train['uniqueTrialCounter']==t, eeg_cols].transpose().values.flatten())
-
-        elif(data_params['data_resampling']=='use7'):
-            for t in data_test['uniqueTrialCounter'].unique():
-                y_test.append(data_test[data_test['uniqueTrialCounter']==t].label.values[0])
-                X_test.append(data_test.loc[data_test['uniqueTrialCounter']==t, eeg_cols].transpose().values.flatten())
-            for t in data_train['uniqueTrialCounter'].unique():
-                y_train.append(data_train[data_train['uniqueTrialCounter']==t].label.values[0])
-                X_train.append(data_train.loc[data_train['uniqueTrialCounter']==t, eeg_cols].transpose().values.flatten())
+            for t in temp['uniqueTrialCounter'].unique():
+                # b = np.array(temp.loc[temp.uniqueTrialCounter == t,eeg_cols])[:4,:]
+                # X.append(b)
+                # y.append(temp.loc[temp['uniqueTrialCounter']==t, 'label'].values[0])
+                y.append(temp[temp['uniqueTrialCounter']==t].label.values[0])
+                X.append(temp.loc[temp['uniqueTrialCounter']==t, eeg_cols].transpose().values.flatten())
         
+        elif(data_params['data_resampling']=='use7'):
+            for t in temp['uniqueTrialCounter'].unique():
+                # b = np.array(temp.loc[temp.uniqueTrialCounter == t,eeg_cols])[:7,:]
+                # X.append(b)
+                # y.append(temp.loc[temp['uniqueTrialCounter']==t, 'label'].values[0])
+                y.append(temp[temp['uniqueTrialCounter']==t].label.values[0])
+                X.append(temp.loc[temp['uniqueTrialCounter']==t, eeg_cols].transpose().values.flatten())
+
         elif(data_params['data_resampling']=='average4'):
-            for t in data_test['uniqueTrialCounter'].unique():
-                y_test.append(data_test[data_test['uniqueTrialCounter']==t].label.values[0])
-                X_test.append(data_test.loc[data_test['uniqueTrialCounter']==t, eeg_cols].mean())
-            for t in data_train['uniqueTrialCounter'].unique():
-                y_train.append(data_train[data_train['uniqueTrialCounter']==t].label.values[0])
-                X_train.append(data_train.loc[data_train['uniqueTrialCounter']==t, eeg_cols].mean())
-                
+            for t in temp['uniqueTrialCounter'].unique():
+                # b = np.array(temp.loc[temp.uniqueTrialCounter == t,eeg_cols])[:4,:].mean()
+                # X.append(b)
+                # y.append(temp.loc[temp['uniqueTrialCounter']==t, 'label'].values[0])
+                y.append(temp[temp['uniqueTrialCounter']==t].label.values[0])
+                X.append(temp.loc[temp['uniqueTrialCounter']==t, eeg_cols].mean())
+
         elif (data_params['data_resampling']=='last'):
-            for t in data_test['uniqueTrialCounter'].unique():
-                y_test.append(data_test[data_test['uniqueTrialCounter']==t].label.values[0])
-                X_test.append(data_test.loc[data_test['uniqueTrialCounter']==t, eeg_cols].values[-1])
-            for t in data_train['uniqueTrialCounter'].unique():
-                y_train.append(data_train[data_train['uniqueTrialCounter']==t].label.values[0])
-                X_train.append(data_train.loc[data_train['uniqueTrialCounter']==t, eeg_cols].values[-1])
-            
-        return [np.asarray(X_train), np.asarray(X_test), np.asarray(y_train), np.asarray(y_test)]
+            for t in temp['uniqueTrialCounter'].unique():
+                # b = np.array(temp.loc[temp.uniqueTrialCounter == t,eeg_cols])[:,:]
+                # X.append(b)
+                # y.append(temp.loc[temp['uniqueTrialCounter']==t, 'label'].values[0])
+                y.append(temp[temp['uniqueTrialCounter']==t].label.values[0])
+                X.append(temp.loc[temp['uniqueTrialCounter']==t, eeg_cols].values[-1])
+
+        return(np.asarray(X), np.asarray(y))
 
     accuracies = list()
     train_acc_list = list()
+    
+    X,y = generateXy_multi(data)
+    print(f'first split shape X={X.shape} and y length = {len(y)}')
 
-
-    for p in participants:
-        X, X_test, y, y_test= generateXyLeaveOne(data, p)
-        print(f'first split shape X={X.shape} and y length = {len(y)}')
-        print(f'first split shape X_test={X_test.shape} and y_test length = {len(y_test)}')
-        
-
-        X_train, X_val, y_train, y_val = train_test_split(
+    X, X_test, y, y_test = train_test_split(
             X, y, test_size=0.2, random_state=42)
-        print(f'first split shape X={X.shape} and y length = {len(y)}')
-        print(f'first split shape X_test={X_test.shape} and y_test length = {len(y_test)}')
-        
-
-        print(f'second split shape X_test={X_test.shape} and y_test length = {len(y_test)}')
-        
-        if (data_params['standard_scaler']):
-            scale = StandardScaler()
-            scale.fit(X_train)
-            X_train = scale.transform(X_train)
-            X_test = scale.transform(X_test)
-            X_val = scale.transform(X_val)
-
-        if (data_params['PCA_reduction']):
-            pca = PCA(n_components=data_params['PCA_number_of_features'])
-            pca.fit(X_train)
-            run['train/PCA_explained_variance_sum']= pca.explained_variance_ratio_.cumsum()
-            X_train = pca.transform(X_train)
-            X_test = pca.transform(X_test)
-            X_val = pca.transform(X_val)
+    
+    X_train, X_val, y_train, y_val = train_test_split(
+            X, y, test_size=0.2, random_state=42)
+    
+    # for p in participants:
+        # X, X_test, y, y_test= generateXyLeaveOne(data, p)
+    print(f'first split shape X={X.shape} and y length = {len(y)}')
+    print(f'first split shape X_test={X_test.shape} and y_test length = {len(y_test)}')
     
 
-        y_test = to_categorical(y_test)
-        y_train = to_categorical(y_train)
-        y_val = to_categorical(y_val)
+    X_train, X_val, y_train, y_val = train_test_split(
+        X, y, test_size=0.2, random_state=42)
+    print(f'first split shape X={X.shape} and y length = {len(y)}')
+    print(f'first split shape X_test={X_test.shape} and y_test length = {len(y_test)}')
+    
 
+    print(f'second split shape X_test={X_test.shape} and y_test length = {len(y_test)}')
+    
+    if (data_params['standard_scaler']):
+        scale = StandardScaler()
+        scale.fit(X_train)
+        X_train = scale.transform(X_train)
+        X_test = scale.transform(X_test)
+        X_val = scale.transform(X_val)
+
+    if (data_params['PCA_reduction']):
+        pca = PCA(n_components=data_params['PCA_number_of_features'])
+        pca.fit(X_train)
+        run['train/PCA_explained_variance_sum']= pca.explained_variance_ratio_.cumsum()
+        X_train = pca.transform(X_train)
+        X_test = pca.transform(X_test)
+        X_val = pca.transform(X_val)
+
+
+    y_test = to_categorical(y_test)
+    y_train = to_categorical(y_train)
+    y_val = to_categorical(y_val)
+
+    kf = KFold(n_splits=30)
+    kf.get_n_splits(X)
+    kindex = 0
+    for train_index, test_index in kf.split(X):
+        print(kindex)
         # model = RandomForestClassifier(random_state=1, n_jobs=-1)
         n_features, n_outputs = X_train.shape[1],  y_train.shape[1]
         model = models.Sequential()
@@ -224,28 +227,14 @@ def runModel(mean_value_subtraction, data_resampling, features_selected, standar
         train_acc = ((y_train.argmax(axis=1) == y_pred_train.argmax(axis=1)).sum())/len(y_train)
         # train_acc = ((y_train == y_pred_train).sum())/len(y_train)
         train_acc_list.append(train_acc)
-        
+        run['train/k_index'].log(kindex)
         run['train/train_acc'].log(train_acc)
         run['test/acc'].log(acc)
+        kindex = kindex+1
 
 
     run['test/average_acc'] =  np.array(accuracies).mean()
     run['train/average_acc'] =  np.array(train_acc_list).mean()
     run.stop()
     return(np.array(accuracies).mean())
-    #     model.fit(X_train, y_train)  
-    #     y_pred = model.predict(X_test)
-
-    #     acc = ((y_test == y_pred).sum())/len(y_test)
-    #     accuracies.append(acc)
-    #     y_pred_train = model.predict(X_train)
-    #     train_acc = ((y_train == y_pred_train).sum())/len(y_train)
-    #     train_acc_list.append(train_acc)
-    #     run['train/participant'].log(p)
-    #     run['train/train_acc'].log(train_acc)
-    #     run['test/acc'].log(acc)
-
-    # run['test/average_acc'] =  np.array(accuracies).mean()
-    # run['train/average_acc'] =  np.array(train_acc_list).mean()
-    # run.stop()
-    # return(np.array(accuracies).mean())
+    
