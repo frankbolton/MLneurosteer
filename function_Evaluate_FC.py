@@ -15,8 +15,8 @@ from sklearn.model_selection import KFold
 # k-fold cross validation on combined data
 
 def runModel(mean_value_subtraction, data_resampling, features_selected, standard_scaler, PCA_reduction, PCA_number_of_features, binary_classifier):
-    # run = neptune.init(project='frankbolton/Neurosteer-ML-v1', source_files=[__file__, 'environment.yaml'])
-    run = neptune.init(project='frankbolton/helloworld', source_files=[__file__, 'environment.yaml'])
+    run = neptune.init(project='frankbolton/Neurosteer-ML-v1', source_files=[__file__, 'environment.yaml'])
+    #run = neptune.init(project='frankbolton/helloworld', source_files=[__file__, 'environment.yaml'])
 
     #preprocessing to select data to model
     data_params = { 'mean_value_subtraction': mean_value_subtraction,
@@ -199,7 +199,7 @@ def runModel(mean_value_subtraction, data_resampling, features_selected, standar
     y_train = to_categorical(y_train)
     y_val = to_categorical(y_val)
 
-    kf = KFold(n_splits=30)
+    kf = KFold(n_splits=10)
     kf.get_n_splits(X)
     kindex = 0
     for train_index, test_index in kf.split(X):
